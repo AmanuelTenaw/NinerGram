@@ -1,0 +1,59 @@
+body{
+    background-color: green;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Centering the form container */
+.form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 70vh;
+}
+
+/* Styling the form box */
+.auth-form {
+    background-color: #ffffff;
+    padding: 2rem 3rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Input styling */
+.auth-form input[type="text"],
+.auth-form input[type="password"],
+.auth-form input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Button */
+.auth-form input[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.auth-form input[type="submit"]:hover {
+    background-color: #218838;
+}
+
+/* Links */
+.auth-form a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.auth-form a:hover {
+    text-decoration: underline;
+}
