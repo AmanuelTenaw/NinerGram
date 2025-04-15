@@ -25,6 +25,38 @@
 
 
     {% block content %}
+    {% if request.user.is_authenticated %}
+  <h2>Feed</h2>
+
+  {% for post in posts %}
+    <div>
+      <p>{{ post.content }}</p>
+      {% if post.image %}
+        <img src="{{ post.image.url }}" style="max-width: 400px;">
+      {% endif %}
+      <p>Posted by {{ post.user.username }} on {{ post.created }}</p>
+    </div>
+  {% empty %}
+    <p>No posts yet.</p>
+  {% endfor %}
+
+{% else %}
+  <p>Please <a href="{% url 'login' %}">log in</a> to view the feed.</p>
+{% endif %}
+
+
+
+{% for user in users %}
+    <p>{{ user.username }}</p>
+    {% if user.id in followed_ids %}
+        <a href="{% url 'unfollow-user' user.id %}">Unfollow</a>
+    {% else %}
+        <a href="{% url 'follow-user' user.id %}">Follow</a>
+    {% endif %}
+{% endfor %}
+
+
+
 
     {% endblock %}
     

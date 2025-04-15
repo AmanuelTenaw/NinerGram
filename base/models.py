@@ -46,6 +46,35 @@ class Message(models.Model):
 
     def __str__(self):
         return self.body[0:50]
+    
 
 
 
+
+
+
+
+
+class Post(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    content = models.TextField()
+    image = models.ImageField(upload_to='post_images/', blank=True, null=True)  # New
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.created}"
+
+
+
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_set')
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers_set')
+    followed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')  
+
+    def __str__(self):
+        return f"{self.follower} follows {self.following}"

@@ -1,0 +1,23 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<form method="GET">
+    <input type="text" name="q" placeholder="Search users..." value="{{ query }}">
+    <button type="submit">Search</button>
+</form>
+
+{% for user in users %}
+    <p>{{ user.username }}</p>
+    {% if user.id in followed_ids %}
+        <a href="{% url 'unfollow-user' user.id %}">Unfollow</a>
+    {% else %}
+        <a href="{% url 'follow-user' user.id %}">Follow</a>
+    {% endif %}
+{% empty %}
+    {% if query %}
+      <p>No users found for "{{ query }}".</p>
+    {% endif %}
+{% endfor %}
+
+
+{% endblock %}
