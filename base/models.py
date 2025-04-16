@@ -1,28 +1,24 @@
 from django.db import models
 from django.contrib.auth.models import User
-#from django.db.models.deletion import CASCADE
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
+# Used for profile picture upload path
+def user_directory_path(instance, filename):
+    return f'profile_pics/user_{instance.user.id}/{filename}'
 
 class Topic(models.Model):
-    name = models.CharField(max_length = 200)
-
-
+    name = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
-    
 
-
-# Create your models here.
 class Room(models.Model):
     host = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True)
-    name = models.CharField(max_length = 200)
+    name = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
-    participants = models.ManyToManyField(
-        User, related_name='participants', blank=True
-    )
-
+    participants = models.ManyToManyField(User, related_name='participants', blank=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -31,42 +27,28 @@ class Room(models.Model):
 
     def __str__(self):
         return self.name
-    
 
 class Message(models.Model):
-    user = models.ForeignKey(User, on_delete= models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     body = models.TextField()
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-
 
     class Meta:
         ordering = ['-updated', '-created']
 
     def __str__(self):
         return self.body[0:50]
-    
-
-
-
-
-
-
-
 
 class Post(models.Model):
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
-    image = models.ImageField(upload_to='post_images/', blank=True, null=True)  # New
+    image = models.ImageField(upload_to='post_images/', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.created}"
-
-
-
-
 
 class Follow(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_set')
@@ -74,7 +56,25 @@ class Follow(models.Model):
     followed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('follower', 'following')  
+        unique_together = ('follower', 'following')
 
     def __str__(self):
         return f"{self.follower} follows {self.following}"
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    display_name = models.CharField(max_length=100, blank=True)
+    profile_picture = models.ImageField(upload_to=user_directory_path, blank=True, null=True)
+    pronouns = models.CharField(max_length=50, blank=True)
+    bio = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.user.username
+
+# Automatically create or update Profile when a User is saved
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+    else:
+        instance.profile.save()
