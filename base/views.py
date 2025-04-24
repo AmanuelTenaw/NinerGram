@@ -4,6 +4,7 @@ from .models import Room, Topic, Message, Post, Follow
 from .forms import RoomForm
 from django.db.models import Q
 from django.contrib.auth.forms import UserCreationForm
+from .forms import CustomUserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -185,3 +186,38 @@ def edit_profile(request):
     }
     return render(request, 'base/edit_profile.html', context)
 
+
+
+
+def registerPage(request):
+    form = CustomUserCreationForm()
+
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = user.username.lower()
+            user.save()
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'An error occurred during registration')
+
+    return render(request, 'base/login_register.html', {'form': form})
+
+
+@login_required
+def user_profile(request):
+    user = request.user
+    profile = Profile.objects.get(user=user)
+    posts = Post.objects.filter(user=user).order_by('-created')
+    followers = Follow.objects.filter(following=user)
+    following = Follow.objects.filter(follower=user)
+
+    context = {
+        'profile': profile,
+        'posts': posts,
+        'followers_count': followers.count(),
+        'following_count': following.count(),
+    }
+    return render(request, 'base/profile.html', context)

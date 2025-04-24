@@ -3,6 +3,7 @@ from .models import Room
 from django import forms
 from .models import Post
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 from .models import Profile
 
 class PostForm(forms.ModelForm):
@@ -26,4 +27,25 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['display_name', 'profile_picture', 'pronouns', 'bio']
-        
+
+
+
+class CustomUserCreationForm(UserCreationForm):
+    school_id = forms.CharField(max_length=20, required=True, label="School ID")
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'school_id', 'password1', 'password2']
+
+    def clean_school_id(self):
+        school_id = self.cleaned_data.get('school_id', '').strip()
+        try:
+            with open('Niner_id.txt', 'r') as f:
+                valid_ids = [line.strip() for line in f.readlines()]
+        except FileNotFoundError:
+            raise forms.ValidationError("Validation file not found.")
+
+        if school_id not in valid_ids:
+            raise forms.ValidationError("School ID not recognized.")
+        return school_id
+      
