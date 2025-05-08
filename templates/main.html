@@ -1,64 +1,67 @@
-<!DOCTYPE html>
 {% load static %}
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>StudyBud</title>
+    <title>NinerGram</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href="{% static 'styles/main.css' %}"> 
-    
-     
+    <link rel='stylesheet' type='text/css' href="{% static 'styles/main.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/ninergram_icon.png' %}">
+
 </head>
 <body>
     {% include 'navbar.html' %}
-    {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
 
-        <li>{{ message }}</li>
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li>{{ message }}</li>
         {% endfor %}
-    </ul>
+      </ul>
     {% endif %}
 
-    <!-- <img src="{% static 'images/uncc.png' %}" />  -->
+    <div class="home-container">
+      <div class="feed-container">
+        {% if request.path == '/' %}
+  <div class="home-container">
+    <div class="feed-container">
+      <h2>Feed</h2>
 
+      {% if posts %}
+        {% for post in posts %}
+          <div class="post-card">
+            <div class="post-header">
+              {% if post.user.profile.avatar %}
+            <img src="{{ post.user.profile.avatar.url }}" class="avatar">
+            {% else %}
+              <img src="{% static 'images/Default_profile.png' %}" alt="default avatar" class="avatar">
+            {% endif %}
 
-    {% block content %}
-    {% if request.user.is_authenticated %}
-  <h2>Feed</h2>
-
-  {% for post in posts %}
-    <div>
-      <p>{{ post.content }}</p>
-      {% if post.image %}
-        <img src="{{ post.image.url }}" style="max-width: 400px;">
+              <a href="{% url 'user-profile' post.user.username %}"><strong>{{ post.user.username }}</strong></a>
+            </div>
+            <div class="post-body">
+              <p>{{ post.content }}</p>
+              {% if post.image %}
+                <img src="{{ post.image.url }}" class="post-image">
+              {% endif %}
+              <h2> </h2>
+              <small>Posted on {{ post.created }}</small>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No posts yet.</p>
       {% endif %}
-      <p>Posted by {{ post.user.username }} on {{ post.created }}</p>
     </div>
-  {% empty %}
-    <p>No posts yet.</p>
-  {% endfor %}
-
-{% else %}
-  <p>Please <a href="{% url 'login' %}">log in</a> to view the feed.</p>
+  </div>
 {% endif %}
 
+      </div>
+    </div>
 
+    {% block content %}{% endblock %}
 
-{% for user in users %}
-    <p>{{ user.username }}</p>
-    {% if user.id in followed_ids %}
-        <a href="{% url 'unfollow-user' user.id %}">Unfollow</a>
-    {% else %}
-        <a href="{% url 'follow-user' user.id %}">Follow</a>
-    {% endif %}
-{% endfor %}
-
-
-
-
-    {% endblock %}
     
 </body>
 </html>

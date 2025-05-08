@@ -1,0 +1,17 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<h2>{{ profile_user.username }} is following:</h2>
+<ul>
+  {% for follow in following %}
+    <li>
+      <a href="{% url 'user-profile' follow.following.username %}">
+
+        {{ follow.following.username }}
+      </a>
+    </li>
+  {% empty %}
+    <li>No following users found.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

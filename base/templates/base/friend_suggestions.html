@@ -1,0 +1,14 @@
+{% extends 'main.html' %}
+{% block content %}
+<h2>Friend Suggestions</h2>
+<ul>
+  {% for profile in suggestions %}
+    <li>
+      {{ profile.user.username }} ({{ profile.major }} - {{ profile.year }})
+      <a href="{% url 'follow-user' profile.user.id %}">Follow</a>
+    </li>
+  {% empty %}
+    <li>No suggestions found.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

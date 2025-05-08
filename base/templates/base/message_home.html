@@ -1,0 +1,20 @@
+{% extends 'main.html' %}
+{% block content %}
+<h2>Messages</h2>
+<ul>
+  {% for thread in threads %}
+    <li>
+      <a href="{% url 'thread-detail' thread.id %}">
+        {{ thread }}
+      </a>
+    </li>
+  {% empty %}
+    <li>No conversations yet.</li>
+  {% endfor %}
+</ul>
+<h3>Start New Conversation</h3>
+<form method="get" action="">
+  <input type="text" name="username" placeholder="Enter username">
+  <button type="submit">Start</button>
+</form>
+{% endblock %}

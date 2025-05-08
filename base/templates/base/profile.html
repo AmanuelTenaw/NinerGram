@@ -1,33 +1,65 @@
 {% extends 'main.html' %}
+{% load static %}
 
 {% block content %}
 <div style="background-color:white; padding: 2rem; max-width: 700px; margin: auto; border-radius: 10px;">
-    <h2>{{ profile.display_name|default:request.user.username }}'s Profile</h2>
-    {% if profile.profile_picture %}
-    <img src="{{ profile.profile_picture.url }}" width="150" style="border-radius: 50%; border: 1px solid #ccc;" />
-{% else %}
-    <p><em>No profile picture uploaded.</em></p>
+    <h2>{{ profile.display_name|default:profile.user.username }}'s Profile</h2>
+
+
+    {% if profile.avatar %}
+    <img src="{{ profile.avatar.url }}" width="150" style="border-radius: 50%; border: 1px solid #ccc;" />
+    {% else %}
+    <img src="{% static 'images/Default_profile.png' %}" width="150" style="border-radius: 50%; border: 1px solid #ccc;" />
 {% endif %}
 
     <p><strong>Pronouns:</strong> {{ profile.pronouns }}</p>
     <p><strong>Bio:</strong> {{ profile.bio }}</p>
 
-    <p><strong>Followers:</strong> {{ followers_count }}</p>
-    <p><strong>Following:</strong> {{ following_count }}</p>
+    <p><strong><a href="{% url 'followers-list' user.username %}">Followers: {{ followers_count }} </a> </strong> </p>
+    <p><strong><a href="{% url 'following-list' user.username %}"> Following: {{ following_count }}</a> </strong> </p>
 
-    <a href="{% url 'edit_profile' %}" style="display:inline-block; margin: 10px 0; color: #007bff;">Edit Profile</a>
+
+    {% if profile.user != request.user %}
+    {% if is_following %}
+        <form method="POST" action="{% url 'unfollow-user' profile.user.id %}">
+            {% csrf_token %}
+            <button type="submit">Unfollow</button>
+        </form>
+    {% else %}
+        <form method="POST" action="{% url 'follow-user' profile.user.id %}">
+            {% csrf_token %}
+            <button type="submit">Follow</button>
+        </form>
+    {% endif %}
+{% endif %}
+
+
+
+    {% if profile.user == request.user %}
+  <a href="{% url 'edit_profile' %}" style="display:inline-block; margin: 10px 0; color: #007bff;">Edit Profile</a>
+    {% endif %}
+
 
     <hr>
-    <h3>My Posts</h3>
+    <h3>Posts</h3>
     {% for post in posts %}
-        <div style="margin-bottom: 1rem;">
-            <p>{{ post.content }}</p>
-            {% if post.image %}
-                <img src="{{ post.image.url }}" style="max-width: 100%; border-radius: 5px;" />
-            {% endif %}
-        </div>
-    {% empty %}
-        <p>You haven't posted anything yet.</p>
-    {% endfor %}
+    <div style="margin-bottom: 1rem;">
+        <p>{{ post.content }}</p>
+        {% if post.image %}
+            <img src="{{ post.image.url }}" style="max-width: 100%; border-radius: 5px;" />
+        {% endif %}
+
+        {% if post.user == request.user %}
+        <h2> </h2>
+  <a href="{% url 'delete-post' post.id %}" style="color: red; display: inline-block; margin-top: 0.5rem;">Delete</a>
+{% endif %}
+
+    </div>
+{% empty %}
+    <p>You haven't posted anything yet.</p>
+{% endfor %}
+
+
+    
 </div>
 {% endblock %}

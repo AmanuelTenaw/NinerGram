@@ -1,0 +1,14 @@
+{% extends 'main.html' %}
+{% block content %}
+<h2>Conversation with {{ other_user.username }}</h2>
+<div style="border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: auto">
+  {% for message in messages %}
+    <p><strong>{{ message.sender.username }}:</strong> {{ message.body }}<br><small>{{ message.timestamp }}</small></p>
+  {% endfor %}
+</div>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Send</button>
+</form>
+{% endblock %}

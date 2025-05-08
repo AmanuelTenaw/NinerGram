@@ -1,0 +1,29 @@
+{% extends 'main.html' %}
+
+{% block content %}
+  <div class="home-container">
+    <div class="feed-container">
+
+      <h2>All Events</h2>
+      <a href="{% url 'create-event' %}">+ Create New Event</a>
+      <hr>
+
+      {% for event in events %}
+        <div class="post-card">
+          <h3>{{ event.title }}</h3>
+          <p><strong>Date:</strong> {{ event.date }}</p>
+          <p><strong>Location:</strong> {{ event.location }}</p>
+
+          {% if event.image %}
+            <img src="{{ event.image.url }}" class="post-image">
+          {% endif %}
+
+          <p><strong>Posted by:</strong> <a href="{% url 'user-profile' event.user.username %}">{{ event.user.username }}</a></p>
+        </div>
+      {% empty %}
+        <p>No events available.</p>
+      {% endfor %}
+
+    </div>
+  </div>
+{% endblock %}

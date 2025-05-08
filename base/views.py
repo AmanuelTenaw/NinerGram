@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-from .models import Room, Topic, Message, Post, Follow
-from .forms import RoomForm
+from .models import Room, Topic, Message, Post, Follow, Event
+from .forms import RoomForm, EventForm, PostForm, UserForm, ProfileForm, MessageForm
 from django.db.models import Q
 from django.contrib.auth.forms import UserCreationForm
 from .forms import CustomUserCreationForm
@@ -10,9 +10,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect
-from .forms import PostForm
-from .forms import UserForm, ProfileForm
-from .models import Profile
+from .models import Profile, Message, Thread
+from django.db import models
+
 
 def create_post(request):
     if request.method == 'POST':
@@ -30,16 +30,16 @@ def create_post(request):
 
 
 @login_required(login_url='login')
+
 def main_view(request):
     followed_ids = Follow.objects.filter(follower=request.user).values_list('following_id', flat=True)
-    posts = Post.objects.filter(
-    Q(user__in=followed_ids) | Q(user=request.user)
-).order_by('-created')
-    
+    posts = Post.objects.filter(Q(user__in=followed_ids) | Q(user=request.user)).order_by('-created')
+    events = Event.objects.filter(Q(user__in=followed_ids) | Q(user=request.user)).order_by('-created')
     users = User.objects.exclude(id=request.user.id)
 
     return render(request, 'main.html', {
         'posts': posts,
+        'events': events,
         'users': users,
         'followed_ids': list(followed_ids), 
     })
@@ -47,17 +47,40 @@ def main_view(request):
 
 
 
+
 @login_required
 def follow_user(request, user_id):
-    user_to_follow = get_object_or_404(User, id=user_id)
-    Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
-    return redirect('home')  # or 'profile', etc.
+    target_user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        Follow.objects.get_or_create(follower=request.user, following=target_user)
+    return redirect('user-profile', username=target_user.username)
+
+
+
 
 @login_required
 def unfollow_user(request, user_id):
-    user_to_unfollow = get_object_or_404(User, id=user_id)
-    Follow.objects.filter(follower=request.user, following=user_to_unfollow).delete()
-    return redirect('home')
+    target_user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        Follow.objects.filter(follower=request.user, following=target_user).delete()
+    return redirect('user-profile', username=target_user.username)
+
+
+@login_required
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+
+    if post.user != request.user:
+        return HttpResponse("Unauthorized", status=401)
+
+    if request.method == 'POST':
+        post.delete()
+        return redirect('user-profile', username=request.user.username)
+
+
+    return render(request, 'base/delete_post.html', {'post': post})
+
+
 
 
 
@@ -84,15 +107,6 @@ def follow_search(request):
 
 
 
-# Create your views here.
-
-
-#rooms = [
-#   {'id': 1, 'name': 'Lets learn python!'},
-#   {'id': 2, 'name': 'Design with me'},
-#   {'id': 3, 'name': 'Frontend developer'},
-#]
- 
 def loginPage(request):
    page = 'login'
    if request.user.is_authenticated:
@@ -142,7 +156,6 @@ def registerPage(request):
 
 
 
-#URLS trigger views, and that is what the user gets back.
 def home(request):
    q = request.GET.get('q') if request.GET.get('q') != None else ''
    rooms = Room.objects.filter(
@@ -205,7 +218,7 @@ def registerPage(request):
 
     return render(request, 'base/login_register.html', {'form': form})
 
-
+"""
 @login_required
 def user_profile(request):
     user = request.user
@@ -221,3 +234,148 @@ def user_profile(request):
         'following_count': following.count(),
     }
     return render(request, 'base/profile.html', context)
+"""
+
+def event_list(request):
+    events = Event.objects.all().order_by('-created')
+    return render(request, 'base/event_list.html', {'events': events})
+
+@login_required
+def create_event(request):
+    form = EventForm()
+    if request.method == 'POST':
+        form = EventForm(request.POST, request.FILES)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.user = request.user
+            event.save()
+            return redirect('event-list')
+    return render(request, 'base/create_event.html', {'form': form})
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Thread, Message, Follow
+from .forms import MessageForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db.models import Q
+
+@login_required
+def thread_list_view(request):
+    threads = Thread.objects.filter(participants=request.user)
+    return render(request, 'base/thread_list.html', {'threads': threads})
+
+@login_required
+def thread_detail_view(request, username):
+    other_user = get_object_or_404(User, username=username)
+    thread = Thread.objects.filter(participants=request.user).filter(participants=other_user).first()
+    if not thread:
+        thread = Thread.objects.create()
+        thread.participants.set([request.user, other_user])
+
+    messages = thread.messages.all()
+
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.thread = thread
+            message.save()
+            return redirect('thread-detail', username=other_user.username)
+    else:
+        form = MessageForm()
+
+    return render(request, 'base/thread_detail.html', {
+        'form': form,
+        'messages': messages,
+        'other_user': other_user
+    })
+
+@login_required
+def start_conversation_view(request):
+    followed_users = User.objects.filter(followers__follower=request.user)
+
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        return redirect('thread-detail', username=username)
+
+    return render(request, 'base/start_conversation.html', {
+        'followed_users': followed_users
+    })
+
+@login_required
+def search_users_view(request):
+    query = request.GET.get('q')
+    current_user_profile = get_object_or_404(Profile, user=request.user)
+    suggestions = Profile.objects.none()
+
+    if current_user_profile.major and current_user_profile.year:
+        suggestions = Profile.objects.filter(
+            Q(major=current_user_profile.major) | Q(year=current_user_profile.year)
+        ).exclude(user=request.user).exclude(id__in=current_user_profile.follows.values_list('id', flat=True))
+
+    users = User.objects.filter(username__icontains=query).exclude(id=request.user.id) if query else User.objects.none()
+    return render(request, 'base/search.html', {'users': users, 'suggestions': suggestions})
+
+
+
+
+
+
+@login_required
+def friend_suggestions(request):
+    user_profile = request.user.profile
+    following_ids = Follow.objects.filter(follower=request.user).values_list('following__id', flat=True)
+
+    suggestions = Profile.objects.exclude(user=request.user).exclude(user__id__in=following_ids).filter(
+        models.Q(major=user_profile.major) | models.Q(year=user_profile.year)
+    )
+
+    return render(request, 'base/friend_suggestions.html', {'suggestions': suggestions})
+
+
+
+def user_profile(request, username):
+    user = get_object_or_404(User, username=username)
+    profile = get_object_or_404(Profile, user=user)
+    
+    followers_count = Follow.objects.filter(following=user).count()
+    following_count = Follow.objects.filter(follower=user).count()
+    posts = user.post_set.all()
+
+    is_following = False
+    if request.user.is_authenticated and request.user != user:
+        is_following = Follow.objects.filter(follower=request.user, following=user).exists()
+
+    context = {
+        'user': user,
+        'profile': profile,
+        'followers_count': followers_count,
+        'following_count': following_count,
+        'posts': posts,
+        'is_following': is_following,  
+    }
+    return render(request, 'base/profile.html', context)
+
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.models import User
+from .models import Follow
+
+def following_list(request, username):
+    user = get_object_or_404(User, username=username)
+    following = Follow.objects.filter(follower=user).select_related('following')
+    return render(request, 'base/following_list.html', {
+        'following': following,
+        'profile_user': user
+    })
+
+def followers_list(request, username):
+    user = get_object_or_404(User, username=username)
+    followers = Follow.objects.filter(following=user).select_related('follower')
+    return render(request, 'base/followers_list.html', {
+        'followers': followers,
+        'profile_user': user
+    })

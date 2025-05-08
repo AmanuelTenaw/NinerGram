@@ -1,10 +1,8 @@
 from django.forms import ModelForm
-from .models import Room 
+from .models import Room, Event, Post, Profile, Message
 from django import forms
-from .models import Post
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Profile
 
 class PostForm(forms.ModelForm):
     class Meta:
@@ -26,7 +24,10 @@ class UserForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['display_name', 'profile_picture', 'pronouns', 'bio']
+        fields = ['display_name', 'avatar', 'pronouns', 'bio', 'major', 'year']
+
+
+
 
 
 
@@ -49,3 +50,21 @@ class CustomUserCreationForm(UserCreationForm):
             raise forms.ValidationError("School ID not recognized.")
         return school_id
       
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ['title', 'location', 'date', 'image']
+
+
+
+
+
+from django import forms
+from .models import Message
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ['body']
+

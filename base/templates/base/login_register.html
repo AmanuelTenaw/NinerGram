@@ -1,21 +1,30 @@
-{% extends 'main.html' %}
 
+{% load static %}
 {% block content %}
+
+
+
 
 <style>
     body {
-        background-color: rgb(3, 201, 3);
-        margin: 0;
-        padding: 0;
-        font-family: Arial, sans-serif;
-    }
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* full height */
+    margin: 0;
+    background-color: #c5f1c5;
+}
 
-    .form-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 70vh;
-    }
+.form-container {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 100px;
+}
+
 
     .auth-form {
         background-color: #ffffff;
@@ -63,13 +72,22 @@
     }
 </style>
 
-<h1>Login Page</h1>
+
 
 <div class="form-container">
     <form method="post" action="" class="auth-form">
         {% csrf_token %}
         {% if page == 'login' %}
-            <h2>Login</h2>
+        <img src="{% static 'images/niner_pic.png' %}" alt="niner_pic" style="display: block; margin: 0 auto 20px auto; width: 200px;">
+
+        {% if messages %}
+    <ul class="messages" style="color: red;">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+            <h2> </h2>
             <label>Username:</label>
             <input type="text" name="username" placeholder="Enter Username" />
 

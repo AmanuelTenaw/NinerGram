@@ -1,0 +1,18 @@
+{% extends 'main.html' %}
+{% block content %}
+<h2>Your Conversations</h2>
+<a href="{% url 'start-conversation' %}">Start New Conversation</a>
+<ul>
+  {% for thread in threads %}
+    <li>
+      {% for user in thread.participants.all %}
+        {% if user != request.user %}
+          <a href="{% url 'thread-detail' user.username %}">Chat with {{ user.username }}</a>
+        {% endif %}
+      {% endfor %}
+    </li>
+  {% empty %}
+    <li>No conversations yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
